@@ -9,6 +9,7 @@ import {
 } from '@nestjs/swagger';
 import { DateRangeDto } from 'src/common/dto/date-range.dto';
 import { HeatmapDto } from './dto/heatmap.dto';
+import type { AuthenticatedRequest } from 'src/auth/interfaces/authenticated-request.interface';
 
 @ApiTags('Relatórios')
 @ApiBearerAuth()
@@ -23,7 +24,10 @@ export class ReportsController {
     status: 200,
     description: 'Retorna contagem de hábitos, check-ins e minutos totais.',
   })
-  async getDashboard(@Request() req, @Query() query: DateRangeDto) {
+  async getDashboard(
+    @Request() req: AuthenticatedRequest,
+    @Query() query: DateRangeDto,
+  ) {
     return this.reportsService.getDashboard(req.user.id, query);
   }
 
@@ -33,7 +37,10 @@ export class ReportsController {
     status: 200,
     description: 'Lista de datas (ISO) onde houve atividade.',
   })
-  async getHeatmap(@Request() req, @Query() query: HeatmapDto) {
+  async getHeatmap(
+    @Request() req: AuthenticatedRequest,
+    @Query() query: HeatmapDto,
+  ) {
     return this.reportsService.getHeatmap(req.user.id, query);
   }
 }

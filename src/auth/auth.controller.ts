@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { SignInDto } from './dto/signin.dto';
 import { SignUpDto } from './dto/signup.dto.';
+import type { AuthenticatedRequest } from 'src/auth/interfaces/authenticated-request.interface';
 
 @ApiTags('Autenticação')
 @Controller('auth')
@@ -69,7 +70,7 @@ export class AuthController {
     status: 401,
     description: 'Não autorizado (Token inválido ou ausente).',
   })
-  async me(@Request() request) {
-    return await this.authService.me(request.user.id);
+  async me(@Request() req: AuthenticatedRequest) {
+    return await this.authService.me(req.user.id);
   }
 }
