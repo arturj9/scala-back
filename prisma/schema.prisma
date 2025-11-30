@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -25,26 +24,25 @@ model User {
 }
 
 model Habit {
-  id           String             @id @default(uuid())
-  name         String             @db.VarChar(255)
-  target_type  HabitType
-  target_value Int
-  created_at   DateTime           @default(now())
-  // Relations
-  user         User               @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id           String    @id @default(uuid())
+  name         String    @db.VarChar(255)
+  created_at   DateTime  @default(now())
+  days_of_week Int[]     @db.SmallInt
+  goal_type    HabitGoalType
+  goal_value   Int
+  reminder_times String[] @default([])
+  user         User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
   user_id      String
-  completions  HabitCompletion[]
+  checkIns     HabitCheckIn[]
   timeEntries  HabitTimeEntry[]
 }
 
-model HabitCompletion {
-  id              String   @id @default(uuid())
-  completion_date DateTime @db.Date
-  // Relations
-  habit           Habit    @relation(fields: [habit_id], references: [id], onDelete: Cascade)
-  habit_id        String
-
-  @@unique([habit_id, completion_date])
+model HabitCheckIn {
+  id                String   @id @default(uuid())
+  checkin_timestamp DateTime @default(now())
+  habit             Habit    @relation(fields: [habit_id], references: [id], onDelete: Cascade)
+  habit_id          String
+  @@index([habit_id, checkin_timestamp])
 }
 
 model HabitTimeEntry {
@@ -52,13 +50,11 @@ model HabitTimeEntry {
   start_time       DateTime
   end_time         DateTime
   duration_minutes Int
-  // Relations
   habit            Habit    @relation(fields: [habit_id], references: [id], onDelete: Cascade)
   habit_id         String
 }
 
-enum HabitType {
-  days
-  hours
+enum HabitGoalType {
+  TIMES_PER_DAY   
+  MINUTES_PER_DAY
 }
-
