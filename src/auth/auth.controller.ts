@@ -5,30 +5,71 @@ import {
   Post,
   Request,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
-import { SignInDto, SignUpDto } from './dtos/auth';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { SignInDto } from './dto/signin.dto';
+import { SignUpDto } from './dto/signup.dto.';
 
+@ApiTags('Autenticação')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('signup')
+  @ApiOperation({ summary: 'Cadastrar um novo usuário' })
+  @ApiResponse({
+    status: 201,
+    description: 'Usuário criado com sucesso.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Dados inválidos (ex: senha curta, email inválido).',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflito: E-mail já está em uso.',
+  })
   async signUp(@Body() body: SignUpDto) {
     return await this.authService.signUp(body);
   }
 
   @Post('signin')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Autenticar usuário (Login)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Login realizado com sucesso. Retorna o Token JWT.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Credenciais inválidas (email ou senha incorretos).',
+  })
   async signIn(@Body() body: SignInDto) {
     return await this.authService.signIn(body);
   }
 
+  @Get('me')
   @ApiBearerAuth()
   @UseGuards(AuthGuard)
-  @Get('me')
+  @ApiOperation({ summary: 'Obter dados do perfil do usuário logado' })
+  @ApiResponse({
+    status: 200,
+    description: 'Dados do usuário retornados com sucesso.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Não autorizado (Token inválido ou ausente).',
+  })
   async me(@Request() request) {
-    return request.user;
+    return await this.authService.me(request.user.id);
   }
 }
