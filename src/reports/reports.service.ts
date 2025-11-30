@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { startOfWeek, endOfWeek, subDays, startOfYear, endOfYear } from 'date-fns';
+import { startOfWeek, endOfWeek, startOfYear, endOfYear } from 'date-fns';
 import { DateRangeDto } from 'src/common/dto/date-range.dto';
 import { HeatmapDto } from './dto/heatmap.dto';
 
@@ -14,7 +14,7 @@ export class ReportsService {
       ? new Date(query.startDate)
       : startOfWeek(now);
 
-    let end = query.endDate ? new Date(query.endDate) : endOfWeek(now);
+    const end = query.endDate ? new Date(query.endDate) : endOfWeek(now);
     end.setHours(23, 59, 59, 999);
 
     const totalHabits = await this.prisma.habit.count({
@@ -57,10 +57,12 @@ export class ReportsService {
     };
   }
 
-async getHeatmap(userId: string, query: HeatmapDto) {
+  async getHeatmap(userId: string, query: HeatmapDto) {
     // 1. Define o range de datas (Padrão: Ano atual se não enviado)
     const now = new Date();
-    const start = query.startDate ? new Date(query.startDate) : startOfYear(now);
+    const start = query.startDate
+      ? new Date(query.startDate)
+      : startOfYear(now);
     const end = query.endDate ? new Date(query.endDate) : endOfYear(now);
     end.setHours(23, 59, 59, 999);
 

@@ -10,6 +10,10 @@ import { HttpAdapterHost } from '@nestjs/core';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { ZodValidationException } from 'nestjs-zod';
 
+interface ZodErrorType {
+  issues: Array<{ path: (string | number)[]; message: string }>;
+}
+
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
@@ -22,18 +26,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     let httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
-    let errorDetails = null;
+    let errorDetails: Array<{ field: string; message: string }> | null = null;
 
     if (exception instanceof ZodValidationException) {
       httpStatus = HttpStatus.BAD_REQUEST;
       message = 'Validation failed';
 
-      const ex = exception as any;
+      const ex = exception as unknown as {
+        getZodError?: () => ZodErrorType;
+        zodError?: ZodErrorType;
+      };
 
       const zodError = ex.getZodError?.() || ex.zodError;
 
-      if (zodError && zodError.issues) {
-        errorDetails = zodError.issues.map((issue: any) => ({
+      if (zodError?.issues) {
+        // Optional chaining (?.)
+        errorDetails = zodError.issues.map((issue) => ({
           field: issue.path.join('.'),
           message: issue.message,
         }));

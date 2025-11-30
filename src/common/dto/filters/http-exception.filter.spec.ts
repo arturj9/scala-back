@@ -2,10 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AllExceptionsFilter } from './http-exception.filter';
 import { HttpAdapterHost } from '@nestjs/core';
 import { HttpStatus, HttpException, ArgumentsHost } from '@nestjs/common';
-import { ZodValidationException, createZodDto } from 'nestjs-zod';
-import { z } from 'zod';
+import { ZodValidationException } from 'nestjs-zod';
 
-// Mock do HttpAdapter
 const mockHttpAdapter = {
   getRequestUrl: jest.fn().mockReturnValue('/test-url'),
   reply: jest.fn(),
@@ -33,10 +31,11 @@ describe('AllExceptionsFilter', () => {
   });
 
   it('deve formatar erros HTTP padrão (HttpException)', () => {
-    // ARRANGE
-    const exception = new HttpException('Erro Proposital', HttpStatus.BAD_REQUEST);
-    
-    // Mock do ArgumentsHost (O contexto da requisição)
+    const exception = new HttpException(
+      'Erro Proposital',
+      HttpStatus.BAD_REQUEST,
+    );
+
     const mockHost = {
       switchToHttp: () => ({
         getRequest: () => ({}),
@@ -44,10 +43,8 @@ describe('AllExceptionsFilter', () => {
       }),
     } as ArgumentsHost;
 
-    // ACT
     filter.catch(exception, mockHost);
 
-    // ASSERT
     expect(mockHttpAdapter.reply).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
@@ -60,8 +57,6 @@ describe('AllExceptionsFilter', () => {
   });
 
   it('deve formatar erros do Zod (ZodValidationException)', () => {
-    // ARRANGE
-    // Criamos um erro fake do Zod
     const zodError = new ZodValidationException({
       issues: [{ path: ['email'], message: 'Email inválido', code: 'custom' }],
     } as any);
@@ -70,17 +65,18 @@ describe('AllExceptionsFilter', () => {
       switchToHttp: () => ({ getRequest: () => ({}), getResponse: () => ({}) }),
     } as ArgumentsHost;
 
-    // ACT
     filter.catch(zodError, mockHost);
 
-    // ASSERT
     expect(mockHttpAdapter.reply).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         statusCode: HttpStatus.BAD_REQUEST,
         message: 'Validation failed',
         details: expect.arrayContaining([
-          expect.objectContaining({ field: 'email', message: 'Email inválido' }),
+          expect.objectContaining({
+            field: 'email',
+            message: 'Email inválido',
+          }),
         ]),
       }),
       HttpStatus.BAD_REQUEST,
@@ -99,7 +95,7 @@ describe('AllExceptionsFilter', () => {
       expect.anything(),
       expect.objectContaining({
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: 'Erro desconhecido no banco', // Mensagem genérica para o usuário
+        message: 'Erro desconhecido no banco',
       }),
       HttpStatus.INTERNAL_SERVER_ERROR,
     );

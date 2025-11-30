@@ -13,7 +13,7 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     prismaMock = mockDeep<PrismaService>();
-    
+
     jwtMock = mockDeep<JwtService>();
 
     const module: TestingModule = await Test.createTestingModule({
@@ -30,13 +30,13 @@ describe('AuthService', () => {
   describe('signUp', () => {
     it('deve cadastrar um usuário com sucesso', async () => {
       const dto = { name: 'Teste', email: 'teste@email.com', password: '123' };
-      
+
       prismaMock.user.findUnique.mockResolvedValue(null);
-      
+
       prismaMock.user.create.mockResolvedValue({
         id: 'uuid-123',
         ...dto,
-        password: 'hashed_password', 
+        password: 'hashed_password',
         created_at: new Date(),
       } as any);
 
@@ -48,8 +48,12 @@ describe('AuthService', () => {
     });
 
     it('deve lançar erro se o e-mail já existe', async () => {
-      const dto = { name: 'Teste', email: 'existente@email.com', password: '123' };
-      
+      const dto = {
+        name: 'Teste',
+        email: 'existente@email.com',
+        password: '123',
+      };
+
       prismaMock.user.findUnique.mockResolvedValue({ id: '1' } as any);
 
       await expect(service.signUp(dto)).rejects.toThrow(UnauthorizedException);

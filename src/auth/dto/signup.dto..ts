@@ -8,5 +8,3 @@ const signUpSchema = z.object({
 });
 
 export class SignUpDto extends createZodDto(signUpSchema) {}
-
-

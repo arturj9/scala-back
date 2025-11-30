@@ -29,9 +29,9 @@ describe('AuthController', () => {
         },
       ],
     })
-    .overrideGuard(AuthGuard)
-    .useValue(mockGuard)
-    .compile();
+      .overrideGuard(AuthGuard)
+      .useValue(mockGuard)
+      .compile();
 
     controller = module.get<AuthController>(AuthController);
     authService = module.get<AuthService>(AuthService);
@@ -43,9 +43,13 @@ describe('AuthController', () => {
 
   describe('signUp', () => {
     it('deve chamar authService.signUp com os dados corretos', async () => {
-      const dto: SignUpDto = { name: 'Teste', email: 't@t.com', password: '123' };
+      const dto: SignUpDto = {
+        name: 'Teste',
+        email: 't@t.com',
+        password: '123',
+      };
       const result = { id: '1', ...dto };
-      
+
       mockAuthService.signUp.mockResolvedValue(result);
 
       expect(await controller.signUp(dto)).toEqual(result);
@@ -67,19 +71,14 @@ describe('AuthController', () => {
 
   describe('me', () => {
     it('deve retornar o perfil do usuário chamando o serviço', async () => {
-      // ARRANGE
       const req = { user: { id: 'user-1' } };
       const userProfile = { id: 'user-1', name: 'Teste', email: 't@t.com' };
-      
-      // Simulamos que o service retorna o perfil do banco
+
       mockAuthService.me.mockResolvedValue(userProfile);
 
-      // ACT
       const result = await controller.me(req);
 
-      // ASSERT
       expect(result).toEqual(userProfile);
-      // Verifica se o controller chamou o serviço com o ID correto
       expect(authService.me).toHaveBeenCalledWith('user-1');
     });
   });

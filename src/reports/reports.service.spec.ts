@@ -25,9 +25,8 @@ describe('ReportsService', () => {
   describe('getDashboard', () => {
     it('deve retornar os totais agregados corretamente', async () => {
       const userId = 'user-1';
-      const query: DateRangeDto = {}; 
+      const query: DateRangeDto = {};
 
-      // Mocks
       prismaMock.habit.count.mockResolvedValue(5);
       prismaMock.habitCheckIn.count.mockResolvedValue(12);
       prismaMock.habitTimeEntry.findMany.mockResolvedValue([
@@ -36,10 +35,8 @@ describe('ReportsService', () => {
         { duration_minutes: 15 },
       ] as any);
 
-      // ACT
       const result = await service.getDashboard(userId, query);
 
-      // ASSERT
       expect(result.overview).toEqual({
         totalHabits: 5,
         checkIns: 12,
@@ -49,36 +46,40 @@ describe('ReportsService', () => {
     });
   });
 
-  // --- TESTES ATUALIZADOS PARA O NOVO getHeatmap ---
   describe('getHeatmap', () => {
     it('deve retornar datas de CheckIns E TimeEntries combinadas e ordenadas', async () => {
       const userId = 'user-1';
-      const query: HeatmapDto = { startDate: '2025-01-01', endDate: '2025-01-31' };
-      
-      const date1 = new Date('2025-01-01T10:00:00Z'); // Mais antigo
-      const date2 = new Date('2025-01-02T14:00:00Z'); // Mais recente
+      const query: HeatmapDto = {
+        startDate: '2025-01-01',
+        endDate: '2025-01-31',
+      };
 
-      // Mock do CheckIn (retorna dia 1)
-      prismaMock.habitCheckIn.findMany.mockResolvedValue([{ checkin_timestamp: date1 }] as any);
-      
-      // Mock do TimeEntry (retorna dia 2)
-      prismaMock.habitTimeEntry.findMany.mockResolvedValue([{ start_time: date2 }] as any);
+      const date1 = new Date('2025-01-01T10:00:00Z');
+      const date2 = new Date('2025-01-02T14:00:00Z');
 
-      // ACT
-      // Agora passamos o userId e o DTO
+      prismaMock.habitCheckIn.findMany.mockResolvedValue([
+        { checkin_timestamp: date1 },
+      ] as any);
+
+      prismaMock.habitTimeEntry.findMany.mockResolvedValue([
+        { start_time: date2 },
+      ] as any);
+
       const result = await service.getHeatmap(userId, query);
 
-      // ASSERT
       expect(result).toHaveLength(2);
-      expect(result).toEqual([date1, date2]); // Verifica se uniu as duas listas
+      expect(result).toEqual([date1, date2]);
 
-      // Verifica se chamou ambos os findMany com os filtros básicos de usuário
-      expect(prismaMock.habitCheckIn.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({ habit: { user_id: userId } })
-      }));
-      expect(prismaMock.habitTimeEntry.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({ habit: { user_id: userId } })
-      }));
+      expect(prismaMock.habitCheckIn.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ habit: { user_id: userId } }),
+        }),
+      );
+      expect(prismaMock.habitTimeEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ habit: { user_id: userId } }),
+        }),
+      );
     });
 
     it('deve filtrar por habitId se fornecido no DTO', async () => {
@@ -90,13 +91,16 @@ describe('ReportsService', () => {
 
       await service.getHeatmap(userId, query);
 
-      // Verifica se o filtro habit_id foi passado para o Prisma
-      expect(prismaMock.habitCheckIn.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({ habit_id: 'habit-especifico' })
-      }));
-      expect(prismaMock.habitTimeEntry.findMany).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({ habit_id: 'habit-especifico' })
-      }));
+      expect(prismaMock.habitCheckIn.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ habit_id: 'habit-especifico' }),
+        }),
+      );
+      expect(prismaMock.habitTimeEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ habit_id: 'habit-especifico' }),
+        }),
+      );
     });
   });
 });

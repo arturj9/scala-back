@@ -16,7 +16,9 @@ export const createHabitSchema = z.object({
   goal_value: z.number().int().positive('O valor da meta deve ser positivo.'),
 
   reminder_times: z
-    .array(z.string().regex(timeRegex, 'Horário inválido. Use o formato HH:mm.'))
+    .array(
+      z.string().regex(timeRegex, 'Horário inválido. Use o formato HH:mm.'),
+    )
     .optional(),
 });
 

@@ -10,7 +10,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ZodValidationPipe());
 
   const httpAdapter = app.get(HttpAdapterHost);
-  
+
   app.useGlobalFilters(new AllExceptionsFilter(httpAdapter));
 
   const config = new DocumentBuilder()
@@ -27,4 +27,7 @@ async function bootstrap() {
   await app.listen(process.env.PORT ?? 3000);
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Erro ao iniciar a aplicação:', err);
+  process.exit(1);
+});

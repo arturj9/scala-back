@@ -92,8 +92,7 @@ export class HabitsService {
   }
 
   async checkIn(habitId: string, userId: string) {
-    const habit = await this.findOne(habitId, userId); // Garante que existe e é do usuário
-
+    const habit = await this.findOne(habitId, userId);
     if (habit.goal_type !== HabitGoalType.TIMES_PER_DAY) {
       throw new BadRequestException(
         'Este hábito não é do tipo contagem (vezes por dia).',
@@ -175,14 +174,15 @@ export class HabitsService {
   }
 
   async removeCheckIn(checkInId: string, userId: string) {
-    // Primeiro, buscamos o registro para garantir que ele pertence ao usuário
     const record = await this.prisma.habitCheckIn.findUnique({
       where: { id: checkInId },
-      include: { habit: true }, // Incluímos o hábito para ver o user_id
+      include: { habit: true },
     });
 
     if (!record || record.habit.user_id !== userId) {
-      throw new NotFoundException('Registro de check-in não encontrado ou permissão negada.');
+      throw new NotFoundException(
+        'Registro de check-in não encontrado ou permissão negada.',
+      );
     }
 
     return this.prisma.habitCheckIn.delete({
@@ -190,7 +190,6 @@ export class HabitsService {
     });
   }
 
-  // 2. Remover uma Entrada de Tempo específica
   async removeTimeEntry(timeEntryId: string, userId: string) {
     const record = await this.prisma.habitTimeEntry.findUnique({
       where: { id: timeEntryId },
@@ -198,7 +197,9 @@ export class HabitsService {
     });
 
     if (!record || record.habit.user_id !== userId) {
-      throw new NotFoundException('Registro de tempo não encontrado ou permissão negada.');
+      throw new NotFoundException(
+        'Registro de tempo não encontrado ou permissão negada.',
+      );
     }
 
     return this.prisma.habitTimeEntry.delete({
@@ -207,25 +208,26 @@ export class HabitsService {
   }
 
   async getGeneralHistory(userId: string, query: DateRangeDto) {
-    // 1. Define o intervalo (Padrão: Mês atual)
-    const start = query.startDate ? new Date(query.startDate) : startOfMonth(new Date());
-    const end = query.endDate ? new Date(query.endDate) : endOfMonth(new Date());
+    const start = query.startDate
+      ? new Date(query.startDate)
+      : startOfMonth(new Date());
+    const end = query.endDate
+      ? new Date(query.endDate)
+      : endOfMonth(new Date());
     end.setHours(23, 59, 59, 999);
 
-    // 2. Busca Check-ins (X vezes por dia)
     const checkIns = await this.prisma.habitCheckIn.findMany({
       where: {
-        habit: { user_id: userId }, // Garante que o hábito é do usuário
+        habit: { user_id: userId },
         checkin_timestamp: {
           gte: start,
           lte: end,
         },
       },
-      include: { habit: { select: { id: true, name: true, goal_type: true } } }, // Traz o nome do hábito
+      include: { habit: { select: { id: true, name: true, goal_type: true } } },
       orderBy: { checkin_timestamp: 'desc' },
     });
 
-    // 3. Busca Sessões de Tempo (Minutos por dia)
     const timeEntries = await this.prisma.habitTimeEntry.findMany({
       where: {
         habit: { user_id: userId },
@@ -238,25 +240,23 @@ export class HabitsService {
       orderBy: { start_time: 'desc' },
     });
 
-    // 4. Unifica e Padroniza a resposta
     const history = [
       ...checkIns.map((c) => ({
         id: c.id,
         type: 'check-in',
         date: c.checkin_timestamp,
         habit: c.habit,
-        value: 1, // Representa 1 execução
+        value: 1,
       })),
       ...timeEntries.map((t) => ({
         id: t.id,
         type: 'time-entry',
         date: t.start_time,
         habit: t.habit,
-        value: t.duration_minutes, // Representa minutos
+        value: t.duration_minutes,
       })),
     ];
 
-    // 5. Ordena tudo por data (mais recente primeiro)
     return history.sort((a, b) => b.date.getTime() - a.date.getTime());
   }
 }
